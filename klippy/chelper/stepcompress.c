@@ -605,6 +605,30 @@ stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
     return 0;
 }
 
+// Return history of queue_step commands
+int __visible
+stepcompress_extract_old(struct stepcompress *sc, struct pull_history_steps *p
+                         , int max, uint64_t start_clock, uint64_t end_clock)
+{
+    int res = 0;
+    struct history_steps *hs;
+    list_for_each_entry(hs, &sc->history_list, node) {
+        if (start_clock >= hs->last_clock || res >= max)
+            break;
+        if (end_clock <= hs->first_clock)
+            continue;
+        p->first_clock = hs->first_clock;
+        p->last_clock = hs->last_clock;
+        p->start_position = hs->start_position;
+        p->step_count = hs->step_count;
+        p->interval = hs->sm.interval;
+        p->add = hs->sm.add;
+        p++;
+        res++;
+    }
+    return res;
+}
+
 
 /****************************************************************
  * Step compress synchronization
